@@ -48,6 +48,7 @@ finally
     fclose($myfile);
 }
 
+# first validatiion
 $rows = count($matrix);
 $cols = count($matrix[0]);
 
@@ -68,24 +69,57 @@ foreach($matrix as $row)
 
 
 
+# I need to run the matrix, until find the final '4'!
+# Each step I'll need to apply 1 propagation
+# and then test the adjacent cells on the new matrix.
+# I'll have to run each adjacent cell looking for a valid path 
+# and be "prepared" to come back to the previous position(s) when stucked (recursive?)
+# or run again since the begin, but remembering what paths do not take again... :-O
 
-$xmatrix = apply_propagation($matrix);
 
 
+$pos_x = 0;
+$pos_y = 0;
 
 
-echo "AGAIN...<br>";
+# repeat (test the adjacents after propagation, particle moves, apply the propagation) until find the cell '4' inside the adjacents
+
+
+$new_matrix = apply_propagation($matrix);
+
+echo "NEW MATRIX, AFTER 1 PROPAGATION...<br>";
 # show the matrix again...
-foreach($xmatrix as $row)
+foreach($new_matrix as $row)
 {
     echo implode(' ', $row). '<br>';
 }
 
 
+# after apllied the propagation, 
+# test the 4 adjacents (up,right,down and left) 
+# looking for an white cell to move next.
+# detail: it can be more than 1!
+
+$adjacents = adjacent_white_cells($new_matrix, $pos_x, $pos_y);
+echo "count(adjacents) = ".count($adjacents).'<br>';
+foreach($adjacents as $pos)
+{
+    //foreach($pos)
+    $x = $pos[0];
+    $y = $pos[1];
+    echo "adjacent: {$x},{$y} <br>";
+}
+
+
+
+
+
+
+
 /**
  * Apply 1 propagation... 
- * White cells turn green if they have a number of adjacent green cells greater than 1 and less than 5. Otherwise, they remain white.
- * Green cells remain green if they have a number of green adjacent cells greater than 3 and less than 6. Otherwise they become white.
+ * White cells turn green if they have a number of adjacent GREEN cells greater than 1 and less than 5. Otherwise, they remain white.
+ * Green cells remain green if they have a number of GREEN adjacent cells greater than 3 and less than 6. Otherwise they become white.
  * Two cells are considered adjacent if they have a border, either on the side, above, below or diagonally.
  * In the example below, the white cell in the center therefore has 8 adjacent white cells.
  */
@@ -104,26 +138,28 @@ function apply_propagation($matrix)
                     // if "number of adjacent green cells greater than 1 and less than 5"
                     if ($qty > 1 and $qty < 5)
                     {
-                        $newmatrix[$x][$y] = '1';
+                        $newmatrix[$x][$y] = '1'; // turn green
                     }
                     else
                     {
-                        $newmatrix[$x][$y] = $cell;
+                        $newmatrix[$x][$y] = $cell; // remain white
                     }
                 break;
+
                 case '1': // green
                     $qty = count_green_adjacents($matrix,$x,$y);
 
                     // if "number of green adjacent cells greater than 3 and less than 6"
                     if ($qty > 3 and $qty < 6)
                     {
-                        $newmatrix[$x][$y] = '0';
+                        $newmatrix[$x][$y] = '1'; // remain green
                     }
                     else
                     {
-                        $newmatrix[$x][$y] = $cell;
+                        $newmatrix[$x][$y] = '0'; // become white
                     }
                 break;
+
                 default: $newmatrix[$x][$y] = $cell;
             }
         }
@@ -221,8 +257,53 @@ function count_green_adjacents($matrix,$x,$y)
 
 
 
+/**
+ * return a list with the white adjacent cells
+ * test the 4 adjacents (up,right,down and left)
+ * to move next.
+ */
+function adjacent_white_cells($matrix,$x,$y)
+{
+    $result = array();
 
+    // 1 up
+    if($y > 0)
+    {
+        if($matrix[$x][$y - 1] == '0')
+        {
+            $result[] = [$x, $y - 1];
+        }
+    }
 
+    // 2 right
+    if($x < count($matrix) - 1)
+    {
+        if($matrix[$x + 1][$y] == '0')
+        {
+            $result[] = [$x + 1, $y];
+        }
+    }
+
+    // 3 down
+    if($y < count($matrix[$x]) - 1)
+    {
+        if($matrix[$x][$y + 1] == '0')
+        {
+            $result[] = [$x, $y + 1];
+        }
+    }
+
+    // 4 left
+    if($x > 0)
+    {
+        if($matrix[$x - 1][$y] == '0')
+        {
+            $result[] = [$x - 1, $y];
+        }
+    }
+
+    return $result;
+}
 
 
 
