@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RICARDO VOIGT (https://github.com/in/ricardo-voigt-software)
+ * RICARDO VOIGT (https://www.linkedin.com/in/ricardo-voigt-software)
  * 
  * You will have to walk through an automaton whose matrix has 65 rows and 85 columns, as shown in the picture below.
  * 
@@ -38,8 +38,7 @@ try
         $line = fgets($myfile);
 
         //removing "\n" in the last position
-        $line = str_replace("\n",'',$line);
-        $line = str_replace(chr(13),'',$line);
+        $line = str_replace(["\n",chr(13)],['',''],$line);
 
         $matrix[] = explode(' ', $line);
     }
