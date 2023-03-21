@@ -1,5 +1,7 @@
 <?php
 
+//ini_set("memory_limit","1000M");
+
 /**
  * RICARDO VOIGT (https://www.linkedin.com/in/ricardo-voigt-software)
  * 
@@ -30,7 +32,8 @@
 $matrix = array();
 
 # input -> load the file to feed the matrix
-$myfile = fopen("sigmageek_stone_input.txt", "r");
+//$myfile = fopen("sigmageek_stone_input.txt", "r");
+$myfile = fopen("sigmageek_TESTE_input.txt", "r");
 try
 {
     while ( ! feof($myfile))
@@ -53,10 +56,10 @@ $rows = count($matrix);
 $cols = count($matrix[0]);
 
 $test1 = "matrix has {$rows} rows and {$cols} columns";
-if($test1 != 'matrix has 65 rows and 85 columns')
-{
-    die('errorr...');
-}
+// if($test1 != 'matrix has 65 rows and 85 columns')
+// {
+//     die('errorr...');
+// }
 echo "<h1>{$test1}</h1>";
 
 
@@ -81,37 +84,135 @@ foreach($matrix as $row)
 $pos_x = 0;
 $pos_y = 0;
 
+//$count_loop = 0;
 
-# repeat (test the adjacents after propagation, particle moves, apply the propagation) until find the cell '4' inside the adjacents
-
+echo "<h4>X = {$pos_x} | Y = {$pos_y}</h4>";
 
 $new_matrix = apply_propagation($matrix);
 
-echo "NEW MATRIX, AFTER 1 PROPAGATION...<br>";
-# show the matrix again...
+
+echo "<h4>NEW MATRIX, AFTER PROPAGATION...</h4>";
 foreach($new_matrix as $row)
 {
     echo implode(' ', $row). '<br>';
 }
 
 
-# after apllied the propagation, 
-# test the 4 adjacents (up,right,down and left) 
-# looking for an white cell to move next.
-# detail: it can be more than 1!
+# in this test, I realized that's not necessary to replicate the matrix inside the recursive function...
+# There is only one matrix, and the temporary matrix with the propagation, before the move, then I can replace it!
 
-$adjacents = adjacent_white_cells($new_matrix, $pos_x, $pos_y);
-echo "count(adjacents) = ".count($adjacents).'<br>';
-foreach($adjacents as $pos)
+$adjacents = adjacent_white_cells_to_move($new_matrix, $pos_x, $pos_y);
+
+echo "<p>count(adjacents) = ".count($adjacents).'</p>';
+//echo "<p>steps = {$steps}</p>";
+
+$result = FALSE;
+foreach($adjacents as $key => $pos)
 {
-    //foreach($pos)
-    $x = $pos[0];
-    $y = $pos[1];
-    echo "adjacent: {$x},{$y} <br>";
+    $_x = $pos[0];
+    $_y = $pos[1];
+    echo "<h4>adjacent: {$key} => {$_x},{$_y} </h4>";
+
+
+    // PROPAGATION 2
+    $new_matrix1 = apply_propagation($new_matrix);
+
+    echo "<h4> - NEW MATRIX, AFTER PROPAGATION...</h4>";
+    foreach($new_matrix1 as $row1)
+    {
+        echo implode(' ', $row1). '<br>';
+    }
+    
+    $adjacents1 = adjacent_white_cells_to_move($new_matrix1, $_x, $_y);
+    echo "<p> - count(adjacents) = ".count($adjacents1).'</p>';
+    //echo "<p>steps = {$steps}</p>";
+    
+    $result = FALSE;
+    foreach($adjacents1 as $key1 => $pos1)
+    {
+        $_x1 = $pos1[0];
+        $_y1 = $pos1[1];
+        echo " - adjacent: {$key1} => {$_x1},{$_y1} <br>";
+    }
+    
+
+
 }
 
 
 
+
+# repeat recursively (apply the propagation, test the adjacents after propagation, particle moves, ) until find the cell '4' inside the adjacents
+
+//$steps = '';
+//$ok = recursive_test($matrix,$pos_x,$pos_y, $steps);
+//echo "<h1>STEPS = {$steps}</h1>";
+
+
+function recursive_test($amatrix, $ax, $ay, &$steps)
+{
+
+    // echo "<h4>MATRIX, BEFORE PROPAGATION...</h4>";
+    // foreach($amatrix as $x => $row)
+    // {
+    //     //echo implode(' ', $row). '<br>';
+    //     foreach($row as $y => $cell)
+    //     {
+    //         if($x == $ax and $y == $ay)
+    //         {
+    //             echo " <b>{$cell}</b>";
+    //         }
+    //         else
+    //         {
+    //             echo " {$cell}";
+    //         }
+    //     }
+    //     echo '<br>';
+    // }
+
+
+    $new_matrix = apply_propagation($amatrix);
+
+    # after apllied the propagation, 
+    # test the 4 adjacents (up,right,down and left) 
+    # looking for an white cell to move next.
+
+    $adjacents = adjacent_white_cells_to_move($new_matrix, $ax, $ay);
+    echo "<p>count(adjacents) = ".count($adjacents).'</p>';
+    //echo "<p>steps = {$steps}</p>";
+
+    $result = FALSE;
+    foreach($adjacents as $key => $pos)
+    {
+        $_x = $pos[0];
+        $_y = $pos[1];
+        //echo "adjacent: {$x},{$y} <br>";
+
+        if($new_matrix[$_x][$_y] == '0') // white
+        {
+            //$result.= $key . ' '. recursive_test($new_matrix,$_x,$_y); // it doesn't make sense concat the path as a result...
+
+            $result = recursive_test($new_matrix, $_x, $_y, $steps);
+        }
+        elseif($new_matrix[$_x][$_y] == '1') // green
+        {
+            // come back??
+            $result = FALSE;
+        }
+        elseif($new_matrix[$_x][$_y] == '4') // FINISH CELL!!!
+        {
+            // even returning true, I need to know the last step $key
+            $result = TRUE;
+        }
+
+        if($result)
+        {
+            $steps.= ' '.$key;
+        }
+    }
+    return $result;
+
+}
 
 
 
@@ -259,10 +360,10 @@ function count_green_adjacents($matrix,$x,$y)
 
 /**
  * return a list with the white adjacent cells
- * test the 4 adjacents (up,right,down and left)
- * to move next.
+ * test the 4 adjacent cells to move next.
+ * U - movement up; D - movement down; R - movement to the right; L - movement to the left
  */
-function adjacent_white_cells($matrix,$x,$y)
+function adjacent_white_cells_to_move($matrix,$x,$y)
 {
     $result = array();
 
@@ -271,25 +372,25 @@ function adjacent_white_cells($matrix,$x,$y)
     {
         if($matrix[$x][$y - 1] == '0')
         {
-            $result[] = [$x, $y - 1];
+            $result['U'] = [$x, $y - 1];
         }
     }
 
     // 2 right
-    if($x < count($matrix) - 1)
+    if($x < count($matrix) - 1  or $matrix[$x][$y + 1] == '4')
     {
         if($matrix[$x + 1][$y] == '0')
         {
-            $result[] = [$x + 1, $y];
+            $result['R'] = [$x + 1, $y];
         }
     }
 
     // 3 down
     if($y < count($matrix[$x]) - 1)
     {
-        if($matrix[$x][$y + 1] == '0')
+        if($matrix[$x][$y + 1] == '0'  or $matrix[$x][$y + 1] == '4')
         {
-            $result[] = [$x, $y + 1];
+            $result['D'] = [$x, $y + 1];
         }
     }
 
@@ -298,7 +399,7 @@ function adjacent_white_cells($matrix,$x,$y)
     {
         if($matrix[$x - 1][$y] == '0')
         {
-            $result[] = [$x - 1, $y];
+            $result['L'] = [$x - 1, $y];
         }
     }
 
