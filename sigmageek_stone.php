@@ -1,6 +1,6 @@
 <?php
 
-//ini_set("memory_limit","1000M");
+set_time_limit(3000);
 
 /**
  * RICARDO VOIGT (https://www.linkedin.com/in/ricardo-voigt-software)
@@ -29,371 +29,208 @@
  * 
  */
 
-//$matrix = load_matrix("sigmageek_stone_input.txt");
-$matrix = load_matrix("sigmageek_TESTE_input.txt");
+$initial_file = 'sigmageek_stone_input.txt';
+//$initial_file = 'sigmageek_TESTE_input.txt';
 
-# input -> load the file to feed the matrix
-//$myfile = fopen("sigmageek_stone_input.txt", "r");
-// $myfile = fopen("sigmageek_TESTE_input.txt", "r");
-// try
-// {
-//     while ( ! feof($myfile))
-//     {
-//         $line = fgets($myfile);
-
-//         //removing "\n" in the last position
-//         $line = str_replace(["\n",chr(13)],['',''],$line);
-
-//         $matrix[] = explode(' ', $line);
-//     }
-// }
-// finally
-// {
-//     fclose($myfile);
-// }
-function load_matrix($file_name)
+if(file_exists("output_file.txt"))
 {
-    $result = array();
-    $myfile = fopen($file_name, "r");
-    try
-    {
-        while ( ! feof($myfile))
-        {
-            $line = fgets($myfile);
-    
-            //removing "\n" in the last position
-            $line = str_replace(["\n",chr(13)],['',''],$line);
-    
-            $result[] = explode(' ', $line);
-        }
-    }
-    finally
-    {
-        fclose($myfile);
-    }
-    return $result;
+    $matrix = array();
+    test_results( $initial_file );
+    die('<H1>the end...</H1>');
 }
-function save_matrix($matrix,$file_name)
+else
 {
-    //if( ! file_exists($file_name))
-    //{
-        $output_file = fopen($file_name, "w");
-        try
-        {
-            foreach($matrix as $y => $row)
-            {
-                fwrite($output_file, implode(' ',$row)."\n");
-            }
-        }
-        finally
-        {
-            fclose($output_file);
-        }
-    //}
-}
+    $matrix = load_matrix($initial_file);
 
 
+    # first validatiion
+    $rows = count($matrix);
+    $cols = count($matrix[0]);
+
+    $test1 = "matrix has {$rows} rows(Y) and {$cols} columns(X)";
+    // if($test1 != 'matrix has 65 rows and 85 columns')
+    // {
+    //     die('errorr...');
+    // }
+    echo "<h1>{$test1}</h1>";
 
 
-# first validatiion
-$rows = count($matrix);
-$cols = count($matrix[0]);
-
-$test1 = "matrix has {$rows} rows(Y) and {$cols} columns(X)";
-// if($test1 != 'matrix has 65 rows and 85 columns')
-// {
-//     die('errorr...');
-// }
-echo "<h1>{$test1}</h1>";
-
-
-
-# show the matrix
-foreach($matrix as $row)
-{
-    echo implode(' ', $row). '<br>';
-}
-# show the matrix, in a different way
-// for($y =0; $y < count($matrix); $y++)
-// {
-//     for($x=0; $x < count($matrix[$y]); $x++)
-//     {
-//         $cell = $matrix[$y][$x];
-//         echo " {$cell}";
-//     }
-//     echo "<br>";
-// }
-
-
-
-# I need to run the matrix, until find the final '4'!
-# Each step I'll need to apply 1 propagation
-# and then test the adjacent cells on the new matrix.
-# I'll have to run each adjacent cell looking for a valid path 
-# and be "prepared" to come back to the previous position(s) when stucked (recursive?)
-# or run again since the begin, but remembering what paths do not take again... :-O
-
-
-//teste_2($matrix);
-//teste_3();
-
-# test with recusive function...
-// $pos_y = 0;
-// $pos_x = 0;
-
-// $steps = '';
-// $ok = recursive_test($matrix, $pos_y, $pos_x, $steps);
-// echo "<h1>STEPS = {$steps}</h1>";
-
-
-
-#### RECURSIVE FUNCTION, TEST 2 ####
-
-#output file
-$output_file = fopen("output_file.txt", "w");
-try
-{
-    $steps = '';
-    $steps_list = array();
-    //$recursive_level = 0;
-
-    $pos_y = 0;
-    $pos_x = 0;
-
-    recursive_test_2($pos_y, $pos_x, 0);
-
-    fwrite($output_file, $steps."\n---\n");
-
-    echo "<p>STEPS={$steps}</p>";
-
-    foreach($steps_list as $_steps)
-    {
-        fwrite($output_file, $_steps."\n");
-        echo "<p>_STEPS={$_steps}</p>";
-    }
-}
-finally
-{
-    fclose($output_file);
-}
-
-
-function teste_3()
-{
-    global $matrix;
-    for($i = 0; $i<=100; $i++)
-    {
-        $new_matrix = apply_propagation($matrix);
-
-        echo "<h4>NEW MATRIX, AFTER PROPAGATION {$i}...</h4>";
-        foreach($new_matrix as $row)
-        {
-            echo implode(' ', $row). '<br>';
-        }
-
-        $matrix = $new_matrix;
-    }
-}
-
-
-
-
-
-
-function teste_2($amatrix)
-{
-    //$count_loop = 0;
-
-    //global $matrix;
-
-    $pos_y = 0;
-    $pos_x = 0;
-
-    echo "<h4>X = {$pos_x} | Y = {$pos_y}</h4>";
-
-    $new_matrix = apply_propagation($amatrix);
-
-
-    echo "<h4>NEW MATRIX, AFTER PROPAGATION...</h4>";
-    foreach($new_matrix as $row)
+    # show the matrix
+    foreach($matrix as $row)
     {
         echo implode(' ', $row). '<br>';
     }
 
-    $adjacents = adjacent_white_cells_to_move($new_matrix, $pos_y, $pos_x);
 
-    echo "<p>count(adjacents) = ".count($adjacents).'</p>';
-    //echo "<p>steps = {$steps}</p>";
 
-    foreach($adjacents as $key => $pos)
+
+    #### RECURSIVE FUNCTION, TEST 2 ####
+
+    #output file
+    $output_file = fopen("output_file.txt", "w");
+    try
     {
-        $_y = $pos[0];
-        $_x = $pos[1];
-        echo "<h4>adjacent: {$key} => {$_y},{$_x} </h4>";
+        $path = '';
+
+        $pos_y = 0;
+        $pos_x = 0;
+
+        $step = 1;
+        recursive_test_2($pos_y, $pos_x, $step);
+
+        fwrite($output_file, $path);
+
+        echo "<p>STEPS/PATH={$path}</p>";
+
+        // foreach($steps_list as $_steps)
+        // {
+        //     fwrite($output_file, $_steps."\n");
+        //     echo "<p>_STEPS={$_steps}</p>";
+        // }
+    }
+    finally
+    {
+        fclose($output_file);
+    }
+
+}
 
 
 
-        // PROPAGATION 2
 
-        $new_matrix1 = apply_propagation($new_matrix);
-
-        echo "<h4> -- NEW MATRIX, AFTER PROPAGATION...</h4>";
-        foreach($new_matrix1 as $row1)
+function load_matrix($file_name)
+{
+    $result = array();
+    $matrix_file = fopen($file_name, "r");
+    try
+    {
+        while ( ! feof($matrix_file))
         {
-            echo implode(' ', $row1). '<br>';
+            $line = fgets($matrix_file);
+    
+            if($line != '')
+            {
+                //removing "\n" in the last position
+                $line = str_replace(["\n",chr(13)],['',''],$line);
+
+                $result[] = explode(' ', $line);
+            }
         }
-        
-        $adjacents1 = adjacent_white_cells_to_move($new_matrix1, $_y, $_x);
-        echo "<p> -- count(adjacents1) = ".count($adjacents1).'</p>';
-        //echo "<p>steps = {$steps}</p>";
-        
-        foreach($adjacents1 as $key1 => $pos1)
+    }
+    finally
+    {
+        fclose($matrix_file);
+    }
+    return $result;
+}
+function save_matrix($file_name)
+{
+    global $matrix;
+    $output_file = fopen($file_name, "w");
+    try
+    {
+        $qty = count($matrix);
+        for($y = 0; $y < $qty; $y++)
         {
-            $_y1 = $pos1[0];
-            $_x1 = $pos1[1];
-            echo " -- adjacent: {$key1} => {$_y1},{$_x1} <br>";
+            $row = $matrix[$y];
+            $line = ($y > 0 ? "\n" : ''). implode(' ',$row);
+            fwrite($output_file, $line);
         }
+    }
+    finally
+    {
+        fclose($output_file);
+    }
+}
+function show_matrix()
+{
+    global $matrix;
+    echo "<p>M A T R I X</p>";
+    foreach($matrix as $y => $row)
+    {
+        echo implode(' ', $row)."<br>";
     }
 }
 
 
 
-# repeat recursively (apply the propagation, test the adjacents after propagation, particle moves, ) until find the cell '4' inside the adjacents
-#  I could create a file for each path... :-/ ??
 
-function recursive_test_2($ay, $ax, $level)
+
+
+
+
+/**
+ * repeat recursively (apply the propagation, test the adjacents after propagation, particle moves...)
+ *  until find the cell '4' inside the adjacents 
+ */
+function recursive_test_2($ay, $ax, $step)
 {
+
     global $matrix;
-    //global $output_file;
-    //global $steps;
-    //global $steps_list;
-    //global $recursive_level;
+    global $path;
 
     # 
-    echo "level = {$level}<br>";
-    //save_matrix($matrix,$recursive_level);
+    echo "<h5>level = {$step}</h5>";
 
     # replacing the matrix for the next move...
     $matrix = apply_propagation($matrix);
 
+    //show_matrix();
+
     # saving the board after the propagation...
     # because I'll have to reload it after each adjacent
-    save_matrix($matrix,"matrix_{$level}.txt");
+    save_matrix("matrix_{$step}.txt");
 
     $adjacents = adjacent_white_cells_to_move($matrix, $ay, $ax);
-    echo "<p>adjacents=".count($adjacents)."</p>";
+    echo "<p>level {$step} | adjacents=".count($adjacents)."</p>";
 
-    foreach($adjacents as $step => $pos)
+    $result = FALSE;
+    foreach($adjacents as $move => $pos)
     {
         # each adjacent is a new path... :-O ? how to "rollback"? 
         # I though recursive would solve that... :-/
-        # I need a counter to know the "level"..
-        // if($steps != '')
-        // {
-        //     $steps_list[] = $steps;
-        // }
+        # I need a counter to know the "level"...
 
-        $_y = $pos[0];
-        $_x = $pos[1];
-
-        echo "<H5> -- level: {$level} | adjacent: {$step} => {$_y},{$_x} </H5>";
-
-
-        # reload here the matrix?? 
-        $matrix = load_matrix("matrix_{$level}.txt");
-
-
-        if($matrix[$_y][$_x] == '0') // white
+        if( ! $result)
         {
-            // store the step
-            //$steps.= ' '.$step;
-            //fwrite($output_file, $steps);
-            
-            //echo "<p>recursive_level={$recursive_level}</p>";
-            //$recursive_level++;
+            $_y = $pos[0];
+            $_x = $pos[1];
 
-            recursive_test_2($_y, $_x, $level+=1);
+            echo "<H5> -- level: {$step} | adjacent: {$move} => {$_y},{$_x} </H5>";
 
-            //$recursive_level--;
-        }
-        elseif($matrix[$_y][$_x] == '4') // FINAL
-        {
-            // do nothing.... ?
-            echo "ACHOU O FINALL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-        }
-        else
-        {
-            echo "achou verde...";
+            # reload here the matrix?? 
+            $matrix = load_matrix("matrix_{$step}.txt");
+
+            //show_matrix();
+
+            if($matrix[$_y][$_x] == '0') // white
+            {
+                $result = recursive_test_2($_y, $_x, $step+1);
+            }
+            elseif($matrix[$_y][$_x] == '4') // FINAL
+            {
+                //echo "ACHOU O FINALL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+                $result = TRUE;
+            }
+            else
+            {
+                # load_matrix isn't loading the same matrix...?
+                die("<h1>green found at level {$step}, it isn't supposed to happen!!</h1>");
+            }
+
+            if($result)
+            {
+                # store the move 
+                $path = $move. ' '.$path;
+            }
         }
     }
-    echo "saiu...level = {$level}<br>";
-
-
-}
-
-function recursive_test($amatrix, $ay, $ax, &$steps)
-{
-
-    // echo "<h4>MATRIX, BEFORE PROPAGATION...</h4>";
-    // foreach($amatrix as $x => $row)
-    // {
-    //     //echo implode(' ', $row). '<br>';
-    //     foreach($row as $y => $cell)
-    //     {
-    //         if($x == $ax and $y == $ay)
-    //         {
-    //             echo " <b>{$cell}</b>";
-    //         }
-    //         else
-    //         {
-    //             echo " {$cell}";
-    //         }
-    //     }
-    //     echo '<br>';
-    // }
-
-
-    $new_matrix = apply_propagation($amatrix);
-
-    # after apllied the propagation, 
-    # test the 4 adjacents (up,right,down and left) 
-    # looking for an white cell to move next.
-
-    $adjacents = adjacent_white_cells_to_move($new_matrix, $ay, $ax);
-    //echo "<p>count(adjacents) = ".count($adjacents).'</p>';
-    //echo "<p>steps = {$steps}</p>";
-
-    $result = FALSE;
-    foreach($adjacents as $key => $pos)
-    {
-        $_y = $pos[0];
-        $_x = $pos[1];
-        //echo "adjacent: {$x},{$y} <br>";
-
-        if($new_matrix[$_y][$_x] == '0') // white
-        {
-            //$result.= $key . ' '. recursive_test($new_matrix,$_x,$_y); // it doesn't make sense concat the path as a result...
-
-            $result = recursive_test($new_matrix, $_y, $_x, $steps);
-        }
-        elseif($new_matrix[$_y][$_x] == '1') // green
-        {
-            // come back?? Actually the adjacent_white_cells_to_move doen't return green... :-/
-            $result = FALSE;
-        }
-        elseif($new_matrix[$_y][$_x] == '4') // FINISH CELL!!!
-        {
-            // even returning true, I need to know the last step $key
-            $result = TRUE;
-        }
-
-        if($result)
-        {
-            $steps.= ' '.$key;
-        }
-    }
+    //echo "got off...level = {$step}<br>";
     return $result;
 }
+
+
+
 
 
 
@@ -540,7 +377,7 @@ function count_green_adjacents($matrix,$y,$x)
 
 
 /**
- * return a list with the white adjacent cells
+ * return a list with the white (and Final) adjacent cells
  * test the 4 adjacent cells to move next.
  * U - movement up; D - movement down; R - movement to the right; L - movement to the left
  */
@@ -587,11 +424,95 @@ function adjacent_white_cells_to_move($amatrix, $y, $x)
     {
         if($amatrix[$y][$x - 1] == '0')
         {
-            $result['L'] = [$y,$x - 1];
+            $result['L'] = [$y, $x - 1];
         }
     }
 
     return $result;
+}
+
+
+
+
+/**
+ * testing the results, based on the files.
+ */
+function test_results($initial_file)
+{
+    global $matrix;
+
+    $moves = array();
+    # load the moves
+    $moves_file = fopen("output_file.txt", "r");
+    try
+    {
+        $line = fgets($moves_file);
+        $moves = explode(' ', $line);
+    }
+    finally
+    {
+        fclose($moves_file);
+    }
+
+    if(count($moves) > 0)
+    {
+        # load the initial matrix (0)
+        $matrix = load_matrix($initial_file);
+        show_matrix();
+
+        # show the list of matrix and each move
+        $y = 0;
+        $x = 0;
+        $step = 1;
+        $the_end = FALSE;
+        while (file_exists("matrix_{$step}.txt") and ! $the_end)
+        {
+            $move = $moves[$step-1];
+            echo "<p>next move: {$move}</p>";
+
+            switch($move)
+            {
+                case 'U':
+                    $y--;
+                break;
+                case 'R':
+                    $x++;
+                break;
+                case 'D':
+                    $y++;
+                break;
+                case 'L':
+                    $x--;
+                break;
+            }
+
+            $matrix = load_matrix("matrix_{$step}.txt");
+            //show_matrix();
+
+            foreach($matrix as $_y=>$row)
+            {
+                foreach($row as $_x=>$cell)
+                {
+                    if($x == $_x and $y == $_y)
+                    {
+                        echo '* ';
+                    }
+                    else
+                    {
+                        echo $cell.' ';
+                    }
+                }
+                echo "<br>";
+            }
+
+            if($matrix[$y][$x] == '4')
+            {
+                $the_end = TRUE;
+            }
+
+            $step++;
+        }
+    }
 }
 
 
