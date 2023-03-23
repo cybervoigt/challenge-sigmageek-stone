@@ -1,6 +1,10 @@
 <?php
 
-set_time_limit(3000);
+set_time_limit(30000);
+
+CONST COLOR_WHITE = '0';
+CONST COLOR_GREEN = '1';
+CONST COLOR_FINAL = '4';
 
 /**
  * RICARDO VOIGT (https://www.linkedin.com/in/ricardo-voigt-software)
@@ -29,64 +33,54 @@ set_time_limit(3000);
  * 
  */
 
-$initial_file = 'sigmageek_stone_input.txt';
-//$initial_file = 'sigmageek_TESTE_input.txt';
+//$initial_filename = 'sigmageek_TESTE_input.txt';
+$initial_filename = "sigmageek_stone_input.txt";
+$output_filename = "output_file.txt";
 
-if(file_exists("output_file.txt"))
+if(file_exists( $output_filename ))
 {
     $matrix = array();
-    test_results( $initial_file );
+    test_results( $initial_filename );
     die('<H1>the end...</H1>');
 }
 else
 {
-    $matrix = load_matrix($initial_file);
+    $matrix = load_matrix($initial_filename);
 
 
     # first validatiion
-    $rows = count($matrix);
-    $cols = count($matrix[0]);
+    // $rows = count($matrix);
+    // $cols = count($matrix[0]);
 
-    $test1 = "matrix has {$rows} rows(Y) and {$cols} columns(X)";
-    // if($test1 != 'matrix has 65 rows and 85 columns')
-    // {
-    //     die('errorr...');
-    // }
-    echo "<h1>{$test1}</h1>";
+    // $test1 = "matrix has {$rows} rows(Y) and {$cols} columns(X)";
+    // // if($test1 != 'matrix has 65 rows and 85 columns')
+    // // {
+    // //     die('errorr...');
+    // // }
+    // echo "<h1>{$test1}</h1>";
 
 
     # show the matrix
-    foreach($matrix as $row)
-    {
-        echo implode(' ', $row). '<br>';
-    }
+    // foreach($matrix as $row)
+    // {
+    //     echo implode(' ', $row). '<br>';
+    // }
 
 
 
 
     #### RECURSIVE FUNCTION, TEST 2 ####
 
+    $path = '';
+    $step = 1;
+    recursive_test_2(0, 0, $step);
+
     #output file
-    $output_file = fopen("output_file.txt", "w");
+    $output_file = fopen($output_filename, "w");
     try
     {
-        $path = '';
-
-        $pos_y = 0;
-        $pos_x = 0;
-
-        $step = 1;
-        recursive_test_2($pos_y, $pos_x, $step);
-
         fwrite($output_file, $path);
-
         echo "<p>STEPS/PATH={$path}</p>";
-
-        // foreach($steps_list as $_steps)
-        // {
-        //     fwrite($output_file, $_steps."\n");
-        //     echo "<p>_STEPS={$_steps}</p>";
-        // }
     }
     finally
     {
@@ -123,23 +117,26 @@ function load_matrix($file_name)
     }
     return $result;
 }
-function save_matrix($file_name)
+function save_matrix($filename)
 {
-    global $matrix;
-    $output_file = fopen($file_name, "w");
-    try
+    if( ! file_exists($filename))
     {
-        $qty = count($matrix);
-        for($y = 0; $y < $qty; $y++)
+        global $matrix;
+        $output_file = fopen($filename, "w");
+        try
         {
-            $row = $matrix[$y];
-            $line = ($y > 0 ? "\n" : ''). implode(' ',$row);
-            fwrite($output_file, $line);
+            $qty = count($matrix);
+            for($y = 0; $y < $qty; $y++)
+            {
+                $row = $matrix[$y];
+                $line = ($y > 0 ? "\n" : ''). implode(' ',$row);
+                fwrite($output_file, $line);
+            }
         }
-    }
-    finally
-    {
-        fclose($output_file);
+        finally
+        {
+            fclose($output_file);
+        }
     }
 }
 function show_matrix()
@@ -170,19 +167,24 @@ function recursive_test_2($ay, $ax, $step)
     global $path;
 
     # 
-    echo "<h5>level = {$step}</h5>";
+    //echo "<h5>level = {$step}</h5>";
 
-    # replacing the matrix for the next move...
-    $matrix = apply_propagation($matrix);
+    if(file_exists("matrix_{$step}.txt"))
+    {
+        $matrix = load_matrix("matrix_{$step}.txt");
+    }
+    else
+    {
+        # replacing the matrix for the next move...
+        $matrix = apply_propagation($matrix);
 
-    //show_matrix();
-
-    # saving the board after the propagation...
-    # because I'll have to reload it after each adjacent
-    save_matrix("matrix_{$step}.txt");
+        # saving the board after the propagation...
+        # because I'll have to reload it after each adjacent
+        save_matrix("matrix_{$step}.txt");
+    }
 
     $adjacents = adjacent_white_cells_to_move($matrix, $ay, $ax);
-    echo "<p>level {$step} | adjacents=".count($adjacents)."</p>";
+    //echo "<p>level {$step} | adjacents=".count($adjacents)."</p>";
 
     $result = FALSE;
     foreach($adjacents as $move => $pos)
@@ -196,18 +198,18 @@ function recursive_test_2($ay, $ax, $step)
             $_y = $pos[0];
             $_x = $pos[1];
 
-            echo "<H5> -- level: {$step} | adjacent: {$move} => {$_y},{$_x} </H5>";
+            //echo "<H5> -- level: {$step} | adjacent: {$move} => {$_y},{$_x} </H5>";
 
             # reload here the matrix?? 
             $matrix = load_matrix("matrix_{$step}.txt");
 
             //show_matrix();
 
-            if($matrix[$_y][$_x] == '0') // white
+            if($matrix[$_y][$_x] == COLOR_WHITE)
             {
                 $result = recursive_test_2($_y, $_x, $step+1);
             }
-            elseif($matrix[$_y][$_x] == '4') // FINAL
+            elseif($matrix[$_y][$_x] == COLOR_FINAL)
             {
                 //echo "ACHOU O FINALL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
                 $result = TRUE;
@@ -251,7 +253,7 @@ function apply_propagation($amatrix)
         {
             switch($cell)
             {
-                case '0': // white
+                case COLOR_WHITE: // white
                     $qty = count_green_adjacents($amatrix,$y,$x);
 
                     // if "number of adjacent green cells greater than 1 and less than 5"
@@ -271,11 +273,11 @@ function apply_propagation($amatrix)
                     // if "number of green adjacent cells greater than 3 and less than 6"
                     if ($qty > 3 and $qty < 6)
                     {
-                        $result[$y][$x] = '1'; // remain green
+                        $result[$y][$x] = $cell; // remain green
                     }
                     else
                     {
-                        $result[$y][$x] = '0'; // become white
+                        $result[$y][$x] = COLOR_WHITE; // become white
                     }
                 break;
 
@@ -394,7 +396,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x)
     // 1 up
     if($y > 0)
     {
-        if($amatrix[$y - 1][$x] == '0')
+        if($amatrix[$y - 1][$x] == COLOR_WHITE)
         {
             $result['U'] = [$y - 1, $x];
         }
@@ -403,7 +405,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x)
     // 2 right
     if($x < $last_pos_x)
     {
-        if(($amatrix[$y][$x + 1] == '0') or ($amatrix[$y][$x + 1] == '4'))
+        if(($amatrix[$y][$x + 1] == COLOR_WHITE) or ($amatrix[$y][$x + 1] == COLOR_FINAL))
         {
             $result['R'] = [$y, $x + 1];
         }
@@ -413,7 +415,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x)
     if($y < $last_pos_y)
     {
         //echo "DOWN: amatrix[{$x}][{$y} + 1] = ".$amatrix[$x][$y + 1].'<br>';
-        if(($amatrix[$y + 1][$x] == '0')  or ($amatrix[$y + 1][$x] == '4'))
+        if(($amatrix[$y + 1][$x] == COLOR_WHITE)  or ($amatrix[$y + 1][$x] == COLOR_FINAL))
         {
             $result['D'] = [$y + 1, $x];
         }
@@ -422,7 +424,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x)
     // 4 left
     if($x > 0)
     {
-        if($amatrix[$y][$x - 1] == '0')
+        if($amatrix[$y][$x - 1] == COLOR_WHITE)
         {
             $result['L'] = [$y, $x - 1];
         }
@@ -437,7 +439,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x)
 /**
  * testing the results, based on the files.
  */
-function test_results($initial_file)
+function test_results($initial_filename)
 {
     global $matrix;
 
@@ -457,7 +459,7 @@ function test_results($initial_file)
     if(count($moves) > 0)
     {
         # load the initial matrix (0)
-        $matrix = load_matrix($initial_file);
+        $matrix = load_matrix($initial_filename);
         show_matrix();
 
         # show the list of matrix and each move
@@ -505,7 +507,7 @@ function test_results($initial_file)
                 echo "<br>";
             }
 
-            if($matrix[$y][$x] == '4')
+            if($matrix[$y][$x] == COLOR_FINAL)
             {
                 $the_end = TRUE;
             }
