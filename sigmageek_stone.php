@@ -33,8 +33,8 @@ CONST COLOR_FINAL = '4';
  * 
  */
 
-$initial_filename = 'sigmageek_TESTE_input.txt';
-//$initial_filename = "sigmageek_stone_input.txt";
+//$initial_filename = 'sigmageek_TESTE_input.txt';
+$initial_filename = "sigmageek_stone_input.txt";
 $output_filename = "output_file.txt";
 
 if(file_exists( $output_filename ))
@@ -47,40 +47,17 @@ else
 {
     $matrix = load_matrix($initial_filename);
 
-
-    # first validatiion
-    // $rows = count($matrix);
-    // $cols = count($matrix[0]);
-
-    // $test1 = "matrix has {$rows} rows(Y) and {$cols} columns(X)";
-    // // if($test1 != 'matrix has 65 rows and 85 columns')
-    // // {
-    // //     die('errorr...');
-    // // }
-    // echo "<h1>{$test1}</h1>";
-
-
-    # show the matrix
-    // foreach($matrix as $row)
-    // {
-    //     echo implode(' ', $row). '<br>';
-    // }
-
-
-
-
-    #### RECURSIVE FUNCTION, TEST 2 ####
-
     $path = '';
+
     $step = 1;
-    recursive_test_2(0, 0, $step);
+    recursive_move(0, 0, $step);
 
     #output file
     $output_file = fopen($output_filename, "w");
     try
     {
         fwrite($output_file, $path);
-        echo "<p>STEPS/PATH={$path}</p>";
+        echo "RESULTING STEPS/PATH={$path}\n";
     }
     finally
     {
@@ -153,20 +130,13 @@ function show_matrix()
 
 
 
-
-
-
 /**
- * repeat recursively (apply the propagation, test the adjacents after propagation, particle moves...)
- *  until find the cell '4' inside the adjacents 
+ * repeat recursively (apply the propagation, test the adjacents after propagation, particle moves to an adjacent)
+ *  until find the cell '4' inside the adjacents.
  */
-function recursive_test_2($ay, $ax, $step)
+function recursive_move($ay, $ax, $step)
 {
-
     global $matrix;
-
-    # 
-    //echo "<h5>level = {$step}</h5>";
 
     if(file_exists("matrix_{$step}.txt"))
     {
@@ -183,13 +153,12 @@ function recursive_test_2($ay, $ax, $step)
     }
 
     $adjacents = adjacent_white_cells_to_move($matrix, $ay, $ax, $step);
-    //echo "<p>level {$step} | adjacents=".count($adjacents)."</p>";
 
     $i = 0;
     $result = FALSE;
     foreach($adjacents as $move => $pos)
     {
-        echo $move.'<br>';
+        // echo $move.'<br>';
         # each adjacent is a new path... :-O ? how to "rollback"? 
         # I though recursive would solve that... :-/
         # I need a counter to know the "level"...
@@ -199,19 +168,15 @@ function recursive_test_2($ay, $ax, $step)
             $_y = $pos[0];
             $_x = $pos[1];
 
-            //echo "<H5> -- level: {$step} | adjacent: {$move} => {$_y},{$_x} </H5>";
-
             # reload here the matrix??
             if ($i > 0)
             {
                 $matrix = load_matrix("matrix_{$step}.txt");
             }
 
-            //show_matrix();
-
             if($matrix[$_y][$_x] == COLOR_WHITE)
             {
-                $result = recursive_test_2($_y, $_x, $step+1);
+                $result = recursive_move($_y, $_x, $step+1);
             }
             elseif($matrix[$_y][$_x] == COLOR_FINAL)
             {
@@ -219,7 +184,6 @@ function recursive_test_2($ay, $ax, $step)
             }
             else
             {
-                # load_matrix isn't loading the same matrix...?
                 die("<h1>green found at level {$step}, it isn't supposed to happen!!</h1>");
             }
 
@@ -232,12 +196,8 @@ function recursive_test_2($ay, $ax, $step)
         }
         $i++;
     }
-    //echo "got off...level = {$step}<br>";
     return $result;
 }
-
-
-
 
 
 
@@ -264,7 +224,7 @@ function apply_propagation($amatrix)
                     // if "number of adjacent green cells greater than 1 and less than 5"
                     if ($qty > 1 and $qty < 5)
                     {
-                        $result[$y][$x] = '1'; // turn green
+                        $result[$y][$x] = COLOR_GREEN; // turn green
                     }
                     else
                     {
@@ -272,7 +232,7 @@ function apply_propagation($amatrix)
                     }
                 break;
 
-                case '1': // green
+                case COLOR_GREEN: // green
                     $qty = count_green_adjacents($amatrix,$y,$x);
 
                     // if "number of green adjacent cells greater than 3 and less than 6"
@@ -395,19 +355,18 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
     $last_pos_y = count($amatrix) - 1;
     $last_pos_x = count($amatrix[$y]) - 1;
 
-    // echo "adjacent_white_cells_to_move(amatrix,{$x},{$y})<br>";
-    // echo "last_pos_x={$last_pos_x} | last_pos_y={$last_pos_y}<br>";
-
-
-    # I changed the order of the adjacents
-    # and now I had the ideia of testing the STEP
-    # when the STEP is ODD priorize the DOWN path
-    # but if the STEP is EVEN priorize the RIGHT path... 
-    # hahahah why are you so serious?!?!!?
+    # 2023-03-24 - this night, I realized that the 
+    # shortest path in this case is ...RDRDRD....
+    # So I changed the order of the adjacents returned here
+    # and now I had the ideia of testing the STEP,
+    # when the STEP is ODD priorize the DOWN adjacent
+    # but if the STEP is EVEN priorize the RIGHT adjacent...
 
     if ($step % 2 == 0)
     {
-        // 2 right
+        // EVEN -> Right first in the result
+
+        // Right
         if($x < $last_pos_x)
         {
             if(($amatrix[$y][$x + 1] == COLOR_WHITE) or ($amatrix[$y][$x + 1] == COLOR_FINAL))
@@ -416,10 +375,9 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
             }
         }
 
-        // 3 down
+        // Down
         if($y < $last_pos_y)
         {
-            //echo "DOWN: amatrix[{$x}][{$y} + 1] = ".$amatrix[$x][$y + 1].'<br>';
             if(($amatrix[$y + 1][$x] == COLOR_WHITE)  or ($amatrix[$y + 1][$x] == COLOR_FINAL))
             {
                 $result['D'] = [$y + 1, $x];
@@ -428,17 +386,18 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
     }
     else
     {
-        // 3 down
+        // ODD -> Down first in the result
+
+        // Down
         if($y < $last_pos_y)
         {
-            //echo "DOWN: amatrix[{$x}][{$y} + 1] = ".$amatrix[$x][$y + 1].'<br>';
             if(($amatrix[$y + 1][$x] == COLOR_WHITE)  or ($amatrix[$y + 1][$x] == COLOR_FINAL))
             {
                 $result['D'] = [$y + 1, $x];
             }
         }
 
-        // 2 right
+        // Right
         if($x < $last_pos_x)
         {
             if(($amatrix[$y][$x + 1] == COLOR_WHITE) or ($amatrix[$y][$x + 1] == COLOR_FINAL))
@@ -448,8 +407,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
         }
     }
 
-
-    // 1 up
+    // UP
     if($y > 0)
     {
         if($amatrix[$y - 1][$x] == COLOR_WHITE)
@@ -458,7 +416,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
         }
     }
 
-    // 4 left
+    // Left
     if($x > 0)
     {
         if($amatrix[$y][$x - 1] == COLOR_WHITE)
@@ -467,7 +425,6 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
         }
     }
 
-
     return $result;
 }
 
@@ -475,7 +432,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
 
 
 /**
- * testing the results, based on the files.
+ * testing and showing the results, based on the resulting files.
  */
 function test_results($initial_filename,$output_filename)
 {
