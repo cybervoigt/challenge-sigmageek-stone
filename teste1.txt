@@ -1,0 +1,30 @@
+
+U -> cima
+D -> baixo
+L -> esquerda
+R -> direita
+
+
+
+D
+D
+D
+D
+D
+U
+U
+R
+D
+U
+U
+R
+R
+R
+D
+U
+D
+D
+R
+D
+R
+D

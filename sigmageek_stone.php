@@ -33,8 +33,8 @@ CONST COLOR_FINAL = '4';
  * 
  */
 
-//$initial_filename = 'sigmageek_TESTE_input.txt';
-$initial_filename = "sigmageek_stone_input.txt";
+$initial_filename = 'sigmageek_TESTE_input.txt';
+//$initial_filename = "sigmageek_stone_input.txt";
 $output_filename = "output_file.txt";
 
 if(file_exists( $output_filename ))
@@ -164,7 +164,6 @@ function recursive_test_2($ay, $ax, $step)
 {
 
     global $matrix;
-    global $path;
 
     # 
     //echo "<h5>level = {$step}</h5>";
@@ -183,9 +182,10 @@ function recursive_test_2($ay, $ax, $step)
         save_matrix("matrix_{$step}.txt");
     }
 
-    $adjacents = adjacent_white_cells_to_move($matrix, $ay, $ax);
+    $adjacents = adjacent_white_cells_to_move($matrix, $ay, $ax, $step);
     //echo "<p>level {$step} | adjacents=".count($adjacents)."</p>";
 
+    $i = 0;
     $result = FALSE;
     foreach($adjacents as $move => $pos)
     {
@@ -200,8 +200,11 @@ function recursive_test_2($ay, $ax, $step)
 
             //echo "<H5> -- level: {$step} | adjacent: {$move} => {$_y},{$_x} </H5>";
 
-            # reload here the matrix?? 
-            $matrix = load_matrix("matrix_{$step}.txt");
+            # reload here the matrix??
+            if ($i > 0)
+            {
+                $matrix = load_matrix("matrix_{$step}.txt");
+            }
 
             //show_matrix();
 
@@ -211,7 +214,6 @@ function recursive_test_2($ay, $ax, $step)
             }
             elseif($matrix[$_y][$_x] == COLOR_FINAL)
             {
-                //echo "ACHOU O FINALL!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
                 $result = TRUE;
             }
             else
@@ -222,10 +224,12 @@ function recursive_test_2($ay, $ax, $step)
 
             if($result)
             {
+                global $path;
                 # store the move 
                 $path = $move. ' '.$path;
             }
         }
+        $i++;
     }
     //echo "got off...level = {$step}<br>";
     return $result;
@@ -379,11 +383,11 @@ function count_green_adjacents($matrix,$y,$x)
 
 
 /**
- * return a list with the white (and Final) adjacent cells
+ * return a list with the white (and FINAL) adjacent cells
  * test the 4 adjacent cells to move next.
  * U - movement up; D - movement down; R - movement to the right; L - movement to the left
  */
-function adjacent_white_cells_to_move($amatrix, $y, $x)
+function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
 {
     $result = array();
 
@@ -393,31 +397,63 @@ function adjacent_white_cells_to_move($amatrix, $y, $x)
     // echo "adjacent_white_cells_to_move(amatrix,{$x},{$y})<br>";
     // echo "last_pos_x={$last_pos_x} | last_pos_y={$last_pos_y}<br>";
 
+
+    # I changed the order of the adjacents
+    # and now I had the ideia of testing the STEP
+    # when the STEP is ODD priorize the DOWN path
+    # but if the STEP is EVEN priorize the RIGHT path... 
+    # hahahah why are you so serious?!?!!?
+
+    if ($step % 2 == 0)
+    {
+        // 2 right
+        if($x < $last_pos_x)
+        {
+            if(($amatrix[$y][$x + 1] == COLOR_WHITE) or ($amatrix[$y][$x + 1] == COLOR_FINAL))
+            {
+                $result['R'] = [$y, $x + 1];
+            }
+        }
+
+        // 3 down
+        if($y < $last_pos_y)
+        {
+            //echo "DOWN: amatrix[{$x}][{$y} + 1] = ".$amatrix[$x][$y + 1].'<br>';
+            if(($amatrix[$y + 1][$x] == COLOR_WHITE)  or ($amatrix[$y + 1][$x] == COLOR_FINAL))
+            {
+                $result['D'] = [$y + 1, $x];
+            }
+        }
+    }
+    else
+    {
+        // 3 down
+        if($y < $last_pos_y)
+        {
+            //echo "DOWN: amatrix[{$x}][{$y} + 1] = ".$amatrix[$x][$y + 1].'<br>';
+            if(($amatrix[$y + 1][$x] == COLOR_WHITE)  or ($amatrix[$y + 1][$x] == COLOR_FINAL))
+            {
+                $result['D'] = [$y + 1, $x];
+            }
+        }
+
+        // 2 right
+        if($x < $last_pos_x)
+        {
+            if(($amatrix[$y][$x + 1] == COLOR_WHITE) or ($amatrix[$y][$x + 1] == COLOR_FINAL))
+            {
+                $result['R'] = [$y, $x + 1];
+            }
+        }
+    }
+
+
     // 1 up
     if($y > 0)
     {
         if($amatrix[$y - 1][$x] == COLOR_WHITE)
         {
             $result['U'] = [$y - 1, $x];
-        }
-    }
-
-    // 2 right
-    if($x < $last_pos_x)
-    {
-        if(($amatrix[$y][$x + 1] == COLOR_WHITE) or ($amatrix[$y][$x + 1] == COLOR_FINAL))
-        {
-            $result['R'] = [$y, $x + 1];
-        }
-    }
-
-    // 3 down
-    if($y < $last_pos_y)
-    {
-        //echo "DOWN: amatrix[{$x}][{$y} + 1] = ".$amatrix[$x][$y + 1].'<br>';
-        if(($amatrix[$y + 1][$x] == COLOR_WHITE)  or ($amatrix[$y + 1][$x] == COLOR_FINAL))
-        {
-            $result['D'] = [$y + 1, $x];
         }
     }
 
@@ -429,6 +465,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x)
             $result['L'] = [$y, $x - 1];
         }
     }
+
 
     return $result;
 }
@@ -445,7 +482,7 @@ function test_results($initial_filename)
 
     $moves = array();
     # load the moves
-    $moves_file = fopen("output_file.txt", "r");
+    $moves_file = fopen($output_filename, "r");
     try
     {
         $line = fgets($moves_file);
