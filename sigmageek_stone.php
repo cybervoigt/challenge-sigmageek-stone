@@ -1,37 +1,34 @@
 <?php
 
-set_time_limit(30000);
+/**
+ * RICARDO VOIGT (https://www.linkedin.com/in/ricardo-voigt-software)
+ * 2023-03-24
+ * My solution for the "Stone Automata Maze Challenge"
+ * by https://sigmageek.com/
+ * 
+ * List of files:
+ *  - sigmageek_TESTE_input.txt (my tests)
+ *  - sigmageek_stone_input.txt (input, matrix 0)
+ * List of functions:
+ *  - load_matrix               (load a matrix from a txt file)
+ *  - save_matrix               (save a matrix into a txt file)
+ *  - recursive_move            (main function of the solution) 
+ *  - apply_propagation         (calculate and apply the propagation rule)
+ *  - count_green_adjacents     (quantity of green adjacent cells around the position)
+ *  - adjacent_white_cells_to_move (list of possible cells to move, with the direction and coordinates)
+ *  - test_results              (evaluate the results creating txt files with each step)
+ * 
+ */
 
 CONST COLOR_WHITE = '0';
 CONST COLOR_GREEN = '1';
 CONST COLOR_FINAL = '4';
 
-/**
- * RICARDO VOIGT (https://www.linkedin.com/in/ricardo-voigt-software)
- * 
- * You will have to walk through an automaton whose matrix has 65 rows and 85 columns, as shown in the picture below.
- * 
- * For this phase, the propagation model is as follows:
- * White cells turn green if they have a number of adjacent green cells greater than 1 and less than 5. Otherwise, they remain white.
- * Green cells remain green if they have a number of green adjacent cells greater than 3 and less than 6. Otherwise they become white.
- * Two cells are considered adjacent if they have a border, either on the side, above, below or diagonally. 
- * In the example below, the white cell in the center therefore has 8 adjacent white cells.
- * 
- * The text file contains 65 lines. Each line contains 85 integer values separated by a blank space followed by a newline character "\n". 
- * These values represent the states of the cells in a matrix with 65 rows and 85 columns. 
- * The value "3" represents the starting point, the value "4" represents the destination point. The value "0" represents a white cell and the value "1" a green cell.
- *  Each row in the file represents a row of the matrix and each row value the value of a cell in that row. The first value in the file represents the upper left corner of the matrix.
- * SOLUTION SUBMISSION
- * You must submit a single line text file containing all the movements of the particle from the starting point to the destination point. 
- * Each movement must be separated by a blank space. Each letter represents a move of the particle, and consequently an update of the board.
- * U - movement up
- * D - movement down
- * R - movement to the right
- * L - movement to the left
- * The particle begins its move in the current state and ends its move after the board update. The particle must never finish its move in a green cell.
- * Example of a hypothetical answer with 10 moves: R R D R D L U D R R
- * 
- */
+CONST MOVE_UP = 'U';
+CONST MOVE_DOWN = 'D';
+CONST MOVE_RIGHT = 'R';
+CONST MOVE_LEFT = 'L';
+
 
 //$initial_filename = 'sigmageek_TESTE_input.txt';
 $initial_filename = "sigmageek_stone_input.txt";
@@ -81,7 +78,7 @@ function load_matrix($file_name)
     
             if($line != '')
             {
-                //removing "\n" in the last position
+                # removing "\n" in the last position
                 $line = str_replace(["\n",chr(13)],['',''],$line);
 
                 $result[] = explode(' ', $line);
@@ -105,8 +102,11 @@ function save_matrix($filename)
             $qty = count($matrix);
             for($y = 0; $y < $qty; $y++)
             {
-                $row = $matrix[$y];
+                $row = $matrix[ $y ];
+
+                # insert "\n" before new lines, not at the end of line.
                 $line = ($y > 0 ? "\n" : ''). implode(' ',$row);
+
                 fwrite($output_file, $line);
             }
         }
@@ -116,17 +116,6 @@ function save_matrix($filename)
         }
     }
 }
-function show_matrix()
-{
-    global $matrix;
-    echo "<p>M A T R I X</p>";
-    foreach($matrix as $y => $row)
-    {
-        echo implode(' ', $row)."<br>";
-    }
-}
-
-
 
 
 
@@ -174,11 +163,11 @@ function recursive_move($ay, $ax, $step)
                 $matrix = load_matrix("matrix_{$step}.txt");
             }
 
-            if($matrix[$_y][$_x] == COLOR_WHITE)
+            if($matrix[ $_y ][ $_x ] == COLOR_WHITE)
             {
                 $result = recursive_move($_y, $_x, $step+1);
             }
-            elseif($matrix[$_y][$_x] == COLOR_FINAL)
+            elseif($matrix[ $_y ][ $_x ] == COLOR_FINAL)
             {
                 $result = TRUE;
             }
@@ -191,7 +180,14 @@ function recursive_move($ay, $ax, $step)
             {
                 global $path;
                 # store the move 
-                $path = $move. ' '.$path;
+                if($path == '')
+                {
+                    $path = $move;
+                }
+                else
+                {
+                    $path = $move . ' '. $path;
+                }
             }
         }
         $i++;
@@ -218,35 +214,35 @@ function apply_propagation($amatrix)
         {
             switch($cell)
             {
-                case COLOR_WHITE: // white
-                    $qty = count_green_adjacents($amatrix,$y,$x);
+                case COLOR_WHITE:
+                    $qty = count_green_adjacents($amatrix, $y, $x);
 
                     // if "number of adjacent green cells greater than 1 and less than 5"
                     if ($qty > 1 and $qty < 5)
                     {
-                        $result[$y][$x] = COLOR_GREEN; // turn green
+                        $result[ $y ][ $x ] = COLOR_GREEN; // turn green
                     }
                     else
                     {
-                        $result[$y][$x] = $cell; // remain white
+                        $result[ $y ][ $x ] = $cell; // remain white
                     }
                 break;
 
-                case COLOR_GREEN: // green
-                    $qty = count_green_adjacents($amatrix,$y,$x);
+                case COLOR_GREEN:
+                    $qty = count_green_adjacents($amatrix, $y, $x);
 
                     // if "number of green adjacent cells greater than 3 and less than 6"
                     if ($qty > 3 and $qty < 6)
                     {
-                        $result[$y][$x] = $cell; // remain green
+                        $result[ $y ][ $x ] = $cell; // remain green
                     }
                     else
                     {
-                        $result[$y][$x] = COLOR_WHITE; // become white
+                        $result[ $y ][ $x ] = COLOR_WHITE; // become white
                     }
                 break;
 
-                default: $result[$y][$x] = $cell;
+                default: $result[ $y ][ $x ] = $cell;
             }
         }
     }
@@ -263,76 +259,76 @@ function count_green_adjacents($matrix,$y,$x)
 {
 
     $last_pos_y = count($matrix) - 1;
-    $last_pos_x = count($matrix[$y]) - 1;
+    $last_pos_x = count($matrix[ $y ]) - 1;
     $result = 0;
 
-    // 1 = left cell
+    // 1 = Left
     if($x > 0)
     {
-        if($matrix[$y][$x-1] == '1')
+        if($matrix[ $y ][ $x - 1 ] == '1')
         {
             $result++;
         }
     }
 
-    // 2 = upper-left cell
+    // 2 = Upper-Left
     if(($y > 0) and ($x > 0))
     {
-        if($matrix[$y - 1][$x - 1] == '1')
+        if($matrix[ $y - 1 ][ $x - 1 ] == '1')
         {
             $result++;
         }
     }
 
-    // 3 = upper cell
+    // 3 = Upper
     if($y > 0)
     {
-        if($matrix[$y - 1][$x] == '1')
+        if($matrix[ $y - 1 ][ $x ] == '1')
         {
             $result++;
         }
     }
 
-    // 4 = upper-right cell
+    // 4 = Upper-Right
     if(($y > 0) and ($x < $last_pos_x))
     {
-        if($matrix[$y - 1][$x + 1] == '1')
+        if($matrix[ $y - 1 ][ $x + 1 ] == '1')
         {
             $result++;
         }
     }
 
-    // 5 = right cell
+    // 5 = Right
     if($x < $last_pos_x)
     {
-        if($matrix[$y][$x + 1] == '1')
+        if($matrix[ $y ][ $x + 1 ] == '1')
         {
             $result++;
         }
     }
 
-    // 6 = down-right cell
+    // 6 = Down-Right
     if(($y < $last_pos_y) and ($x < $last_pos_x))
     {
-        if($matrix[$y + 1][$x + 1] == '1')
+        if($matrix[ $y + 1 ][ $x + 1 ] == '1')
         {
             $result++;
         }
     }
 
-    // 7 = down cell
+    // 7 = Down
     if($y < $last_pos_y)
     {
-        if($matrix[$y + 1][$x] == '1')
+        if($matrix[ $y + 1 ][ $x ] == '1')
         {
             $result++;
         }
     }
 
-    // 8 = down-left cell
+    // 8 = Down-Left
     if(($y < $last_pos_y) and ($x > 0))
     {
-        if($matrix[$y + 1][$x - 1] == '1')
+        if($matrix[ $y + 1 ][ $x - 1 ] == '1')
         {
             $result++;
         }
@@ -353,7 +349,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
     $result = array();
 
     $last_pos_y = count($amatrix) - 1;
-    $last_pos_x = count($amatrix[$y]) - 1;
+    $last_pos_x = count($amatrix[ $y ]) - 1;
 
     # 2023-03-24 - this night, I realized that the 
     # shortest path in this case is ...RDRDRD....
@@ -361,6 +357,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
     # and now I had the ideia of testing the STEP,
     # when the STEP is ODD priorize the DOWN adjacent
     # but if the STEP is EVEN priorize the RIGHT adjacent...
+    # Well done! It works now... :-)
 
     if ($step % 2 == 0)
     {
@@ -369,18 +366,18 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
         // Right
         if($x < $last_pos_x)
         {
-            if(($amatrix[$y][$x + 1] == COLOR_WHITE) or ($amatrix[$y][$x + 1] == COLOR_FINAL))
+            if(($amatrix[ $y ][ $x + 1 ] == COLOR_WHITE) or ($amatrix[ $y ][ $x + 1 ] == COLOR_FINAL))
             {
-                $result['R'] = [$y, $x + 1];
+                $result[ MOVE_RIGHT ] = [$y, $x + 1];
             }
         }
 
         // Down
         if($y < $last_pos_y)
         {
-            if(($amatrix[$y + 1][$x] == COLOR_WHITE)  or ($amatrix[$y + 1][$x] == COLOR_FINAL))
+            if(($amatrix[ $y + 1 ][ $x ] == COLOR_WHITE)  or ($amatrix[ $y + 1 ][ $x ] == COLOR_FINAL))
             {
-                $result['D'] = [$y + 1, $x];
+                $result[ MOVE_DOWN ] = [$y + 1, $x];
             }
         }
     }
@@ -391,18 +388,18 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
         // Down
         if($y < $last_pos_y)
         {
-            if(($amatrix[$y + 1][$x] == COLOR_WHITE)  or ($amatrix[$y + 1][$x] == COLOR_FINAL))
+            if(($amatrix[ $y + 1 ][ $x ] == COLOR_WHITE)  or ($amatrix[ $y + 1 ][ $x ] == COLOR_FINAL))
             {
-                $result['D'] = [$y + 1, $x];
+                $result[ MOVE_DOWN ] = [$y + 1, $x];
             }
         }
 
         // Right
         if($x < $last_pos_x)
         {
-            if(($amatrix[$y][$x + 1] == COLOR_WHITE) or ($amatrix[$y][$x + 1] == COLOR_FINAL))
+            if(($amatrix[ $y ][ $x + 1 ] == COLOR_WHITE) or ($amatrix[ $y ][ $x + 1 ] == COLOR_FINAL))
             {
-                $result['R'] = [$y, $x + 1];
+                $result[ MOVE_RIGHT ] = [$y, $x + 1];
             }
         }
     }
@@ -410,18 +407,18 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
     // UP
     if($y > 0)
     {
-        if($amatrix[$y - 1][$x] == COLOR_WHITE)
+        if($amatrix[ $y - 1 ][ $x ] == COLOR_WHITE)
         {
-            $result['U'] = [$y - 1, $x];
+            $result[ MOVE_UP ] = [$y - 1, $x];
         }
     }
 
     // Left
     if($x > 0)
     {
-        if($amatrix[$y][$x - 1] == COLOR_WHITE)
+        if($amatrix[ $y ][ $x - 1 ] == COLOR_WHITE)
         {
-            $result['L'] = [$y, $x - 1];
+            $result[ MOVE_LEFT ] = [$y, $x - 1];
         }
     }
 
@@ -432,7 +429,8 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
 
 
 /**
- * testing and showing the results, based on the resulting files.
+ * Testing and showing the results, based on the resulting files.
+ * Run the script again to create 'step_step_after_move.txt' files...
  */
 function test_results($initial_filename,$output_filename)
 {
@@ -455,9 +453,8 @@ function test_results($initial_filename,$output_filename)
     {
         # load the initial matrix (0)
         $matrix = load_matrix($initial_filename);
-        show_matrix();
 
-        # show the list of matrix and each move
+        # save resulting matrix after each move
         $y = 0;
         $x = 0;
         $step = 1;
@@ -465,54 +462,34 @@ function test_results($initial_filename,$output_filename)
         while (file_exists("matrix_{$step}.txt") and ! $the_end)
         {
             $move = $moves[$step-1];
-            echo "<p>next move: {$move}</p>\n";
 
             switch($move)
             {
-                case 'U':
-                    $y--;
+                case MOVE_UP:    $y--;
                 break;
-                case 'R':
-                    $x++;
+                case MOVE_RIGHT: $x++;
                 break;
-                case 'D':
-                    $y++;
+                case MOVE_DOWN:  $y++;
                 break;
-                case 'L':
-                    $x--;
+                case MOVE_LEFT:  $x--;
                 break;
             }
 
             $matrix = load_matrix("matrix_{$step}.txt");
-            //show_matrix();
 
-            foreach($matrix as $_y=>$row)
-            {
-                foreach($row as $_x=>$cell)
-                {
-                    if($x == $_x and $y == $_y)
-                    {
-                        echo '* ';
-                    }
-                    else
-                    {
-                        echo $cell.' ';
-                    }
-                }
-                //echo "<br>";
-                echo "\n"; // CLI
-            }
-
-            if($matrix[$y][$x] == COLOR_FINAL)
+            if($matrix[ $y ][ $x ] == COLOR_FINAL)
             {
                 $the_end = TRUE;
             }
+            else
+            {
+                $matrix[ $y ][ $x ] = 'X';
+            }
+            save_matrix("step_{$step}_after_{$move}.txt");
 
             $step++;
         }
     }
 }
-
-
 
 ?>
