@@ -40,7 +40,7 @@ $output_filename = "output_file.txt";
 if(file_exists( $output_filename ))
 {
     $matrix = array();
-    test_results( $initial_filename );
+    test_results( $initial_filename, $output_filename );
     die('<H1>the end...</H1>');
 }
 else
@@ -189,6 +189,7 @@ function recursive_test_2($ay, $ax, $step)
     $result = FALSE;
     foreach($adjacents as $move => $pos)
     {
+        echo $move.'<br>';
         # each adjacent is a new path... :-O ? how to "rollback"? 
         # I though recursive would solve that... :-/
         # I need a counter to know the "level"...
@@ -476,7 +477,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
 /**
  * testing the results, based on the files.
  */
-function test_results($initial_filename)
+function test_results($initial_filename,$output_filename)
 {
     global $matrix;
 
@@ -507,7 +508,7 @@ function test_results($initial_filename)
         while (file_exists("matrix_{$step}.txt") and ! $the_end)
         {
             $move = $moves[$step-1];
-            echo "<p>next move: {$move}</p>";
+            echo "<p>next move: {$move}</p>\n";
 
             switch($move)
             {
@@ -541,7 +542,8 @@ function test_results($initial_filename)
                         echo $cell.' ';
                     }
                 }
-                echo "<br>";
+                //echo "<br>";
+                echo "\n"; // CLI
             }
 
             if($matrix[$y][$x] == COLOR_FINAL)
