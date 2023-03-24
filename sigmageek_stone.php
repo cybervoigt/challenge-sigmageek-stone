@@ -36,43 +36,21 @@ CONST MOVE_LEFT = 'L';
 
 //$initial_filename = 'sigmageek_TESTE_input.txt';
 $initial_filename = "sigmageek_stone_input.txt";
-$output_filename = "output_file.txt";
 
-// if(file_exists( $output_filename ))
-// {
-//     $matrix = array();
-//     show_results_html( $initial_filename, $output_filename );
-//     //test_results( $initial_filename, $output_filename );
-//     //die('<H1>the end...</H1>');
-// }
-// else
-// {
-    $matrix = load_matrix($initial_filename);
+$matrix = load_matrix($initial_filename);
 
-    $path = '';
+$path = '';
 
-    $step = 1;
-    recursive_move(0, 0, $step);
+$step = 1;
+recursive_move(0, 0, $step);
 
-    #output file
-    // $output_file = fopen($output_filename, "w");
-    // try
-    // {
-    //     fwrite($output_file, $path);
-    //     echo "RESULTING STEPS/PATH={$path}\n";
-    // }
-    // finally
-    // {
-    //     fclose($output_file);
-    // }
-
-    show_results_html($initial_filename);
-
-// }
+show_results_html($initial_filename);
 
 
 
-
+/**
+ * load a matrix from txt file
+ */
 function load_matrix($file_name)
 {
     $result = array();
@@ -98,6 +76,9 @@ function load_matrix($file_name)
     }
     return $result;
 }
+/**
+ * save a matrix to a txt file
+ */
 function save_matrix($filename)
 {
     if( ! file_exists($filename))
@@ -434,74 +415,9 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
 
 
 
-
-/**
- * Testing and showing the results, based on the resulting files.
- * Run the script again to create 'step_step_after_move.txt' files...
- */
-function test_results($initial_filename,$output_filename)
-{
-    global $matrix;
-
-    $moves = array();
-    # load the moves
-    $moves_file = fopen($output_filename, "r");
-    try
-    {
-        $line = fgets($moves_file);
-        $moves = explode(' ', $line);
-    }
-    finally
-    {
-        fclose($moves_file);
-    }
-
-    if(count($moves) > 0)
-    {
-        # load the initial matrix (0)
-        $matrix = load_matrix($initial_filename);
-
-        # save resulting matrix after each move
-        $y = 0;
-        $x = 0;
-        $step = 1;
-        $the_end = FALSE;
-        while (file_exists("matrix_{$step}.txt") and ! $the_end)
-        {
-            $move = $moves[$step-1];
-
-            switch($move)
-            {
-                case MOVE_UP:    $y--;
-                break;
-                case MOVE_RIGHT: $x++;
-                break;
-                case MOVE_DOWN:  $y++;
-                break;
-                case MOVE_LEFT:  $x--;
-                break;
-            }
-
-            $matrix = load_matrix("matrix_{$step}.txt");
-
-            if($matrix[ $y ][ $x ] == COLOR_FINAL)
-            {
-                $the_end = TRUE;
-            }
-            else
-            {
-                $matrix[ $y ][ $x ] = 'X';
-            }
-            save_matrix("step_{$step}_after_{$move}.txt");
-
-            $step++;
-        }
-    }
-}
-
 /**
  * ICING ON THE CAKE
- * function to show the movimentos in HTML format
+ * function to show the moviments in HTML format
  */
 function show_results_html($initial_filename)
 {
@@ -537,7 +453,7 @@ function show_results_html($initial_filename)
         # create a list with all of the steps/propagations... :-O
         $y = 0;
         $x = 0;
-        $output_javascript.= " const list_matrix = [\n";
+        $output_javascript.= " const matrix_list = [\n";
         foreach($moves as $i => $move)
         {
             $step = $i+1;
@@ -588,17 +504,19 @@ function show_results_html($initial_filename)
                 function()
                 {
                     i++;
-                    const matrix = list_matrix[ i ];
-
-                    for (var y = 0; y < matrix.length; y++)
+                    if(i < matrix_list.length)
                     {
-                        var row = matrix[ y ];
-                        for (var x = 0; x < row.length; x++)
+                        const matrix = matrix_list[ i ];
+                        for (var y = 0; y < matrix.length; y++)
                         {
-                            var cell = row[ x ];
-                            elem = document.getElementById( \"cell_\" + y.toString() + \"_\" + x.toString() );
-                            elem.className = \"class_\" + cell;
-                            // elem.innerHTML = cell;
+                            var row = matrix[ y ];
+                            for (var x = 0; x < row.length; x++)
+                            {
+                                var cell = row[ x ];
+                                elem = document.getElementById( \"cell_\" + y.toString() + \"_\" + x.toString() );
+                                elem.className = \"class_\" + cell;
+                                // elem.innerHTML = cell;
+                            }
                         }
                     }
                 }, 200);";
@@ -609,7 +527,7 @@ function show_results_html($initial_filename)
         $output_html = "<HTML>
             <HEAD>
             <STYLE>
-                table {width: 100%; height: 50%; border-collapse: collapse; }
+                table {width: 1024px; height: 768px; border-collapse: collapse; }
                 table, tr, td {border: 1px solid black; }
                 .class_0 { background-color: white; }
                 .class_1 { background-color: green; }
