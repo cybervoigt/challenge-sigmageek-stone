@@ -8,7 +8,8 @@
  * 
  * List of files:
  *  - sigmageek_TESTE_input.txt (my tests)
- *  - sigmageek_stone_input.txt (input, matrix 0)
+ *  - sigmageek_stone_input.txt (input from sigmageek, matrix 0)
+ *  - output_file.txt           (text file containing all the movements, created on the FIRST RUN)
  * List of functions:
  *  - load_matrix               (load a matrix from a txt file)
  *  - save_matrix               (save a matrix into a txt file)
@@ -16,7 +17,10 @@
  *  - apply_propagation         (calculate and apply the propagation rule)
  *  - count_green_adjacents     (quantity of green adjacent cells around the position)
  *  - adjacent_white_cells_to_move (list of possible cells to move, with the direction and coordinates)
- *  - test_results              (evaluate the results creating txt files with each step)
+ *  - test_results              (evaluate the results creating txt files with each step, it's needed to RUN AGAIN)
+ *  - show_results_html         (return a very simple HTML page with a table and javascript to show the steps)
+ * 
+ * OUTPUT:  RUN once, the program will create the "output_file.txt", RUN again and the result will be shown as HTML.
  * 
  */
 
@@ -34,14 +38,15 @@ CONST MOVE_LEFT = 'L';
 $initial_filename = "sigmageek_stone_input.txt";
 $output_filename = "output_file.txt";
 
-if(file_exists( $output_filename ))
-{
-    $matrix = array();
-    test_results( $initial_filename, $output_filename );
-    die('<H1>the end...</H1>');
-}
-else
-{
+// if(file_exists( $output_filename ))
+// {
+//     $matrix = array();
+//     show_results_html( $initial_filename, $output_filename );
+//     //test_results( $initial_filename, $output_filename );
+//     //die('<H1>the end...</H1>');
+// }
+// else
+// {
     $matrix = load_matrix($initial_filename);
 
     $path = '';
@@ -50,18 +55,20 @@ else
     recursive_move(0, 0, $step);
 
     #output file
-    $output_file = fopen($output_filename, "w");
-    try
-    {
-        fwrite($output_file, $path);
-        echo "RESULTING STEPS/PATH={$path}\n";
-    }
-    finally
-    {
-        fclose($output_file);
-    }
+    // $output_file = fopen($output_filename, "w");
+    // try
+    // {
+    //     fwrite($output_file, $path);
+    //     echo "RESULTING STEPS/PATH={$path}\n";
+    // }
+    // finally
+    // {
+    //     fclose($output_file);
+    // }
 
-}
+    show_results_html($initial_filename);
+
+// }
 
 
 
@@ -262,7 +269,7 @@ function count_green_adjacents($matrix,$y,$x)
     $last_pos_x = count($matrix[ $y ]) - 1;
     $result = 0;
 
-    // 1 = Left
+    # 1 = Left
     if($x > 0)
     {
         if($matrix[ $y ][ $x - 1 ] == '1')
@@ -271,7 +278,7 @@ function count_green_adjacents($matrix,$y,$x)
         }
     }
 
-    // 2 = Upper-Left
+    # 2 = Upper-Left
     if(($y > 0) and ($x > 0))
     {
         if($matrix[ $y - 1 ][ $x - 1 ] == '1')
@@ -280,7 +287,7 @@ function count_green_adjacents($matrix,$y,$x)
         }
     }
 
-    // 3 = Upper
+    # 3 = Upper
     if($y > 0)
     {
         if($matrix[ $y - 1 ][ $x ] == '1')
@@ -289,7 +296,7 @@ function count_green_adjacents($matrix,$y,$x)
         }
     }
 
-    // 4 = Upper-Right
+    # 4 = Upper-Right
     if(($y > 0) and ($x < $last_pos_x))
     {
         if($matrix[ $y - 1 ][ $x + 1 ] == '1')
@@ -298,7 +305,7 @@ function count_green_adjacents($matrix,$y,$x)
         }
     }
 
-    // 5 = Right
+    # 5 = Right
     if($x < $last_pos_x)
     {
         if($matrix[ $y ][ $x + 1 ] == '1')
@@ -307,7 +314,7 @@ function count_green_adjacents($matrix,$y,$x)
         }
     }
 
-    // 6 = Down-Right
+    # 6 = Down-Right
     if(($y < $last_pos_y) and ($x < $last_pos_x))
     {
         if($matrix[ $y + 1 ][ $x + 1 ] == '1')
@@ -316,7 +323,7 @@ function count_green_adjacents($matrix,$y,$x)
         }
     }
 
-    // 7 = Down
+    # 7 = Down
     if($y < $last_pos_y)
     {
         if($matrix[ $y + 1 ][ $x ] == '1')
@@ -325,7 +332,7 @@ function count_green_adjacents($matrix,$y,$x)
         }
     }
 
-    // 8 = Down-Left
+    # 8 = Down-Left
     if(($y < $last_pos_y) and ($x > 0))
     {
         if($matrix[ $y + 1 ][ $x - 1 ] == '1')
@@ -361,9 +368,9 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
 
     if ($step % 2 == 0)
     {
-        // EVEN -> Right first in the result
+        # EVEN -> Right first in the result
 
-        // Right
+        # Right
         if($x < $last_pos_x)
         {
             if(($amatrix[ $y ][ $x + 1 ] == COLOR_WHITE) or ($amatrix[ $y ][ $x + 1 ] == COLOR_FINAL))
@@ -372,7 +379,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
             }
         }
 
-        // Down
+        # Down
         if($y < $last_pos_y)
         {
             if(($amatrix[ $y + 1 ][ $x ] == COLOR_WHITE)  or ($amatrix[ $y + 1 ][ $x ] == COLOR_FINAL))
@@ -383,9 +390,9 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
     }
     else
     {
-        // ODD -> Down first in the result
+        # ODD -> Down first in the result
 
-        // Down
+        # Down
         if($y < $last_pos_y)
         {
             if(($amatrix[ $y + 1 ][ $x ] == COLOR_WHITE)  or ($amatrix[ $y + 1 ][ $x ] == COLOR_FINAL))
@@ -394,7 +401,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
             }
         }
 
-        // Right
+        # Right
         if($x < $last_pos_x)
         {
             if(($amatrix[ $y ][ $x + 1 ] == COLOR_WHITE) or ($amatrix[ $y ][ $x + 1 ] == COLOR_FINAL))
@@ -404,7 +411,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
         }
     }
 
-    // UP
+    # UP
     if($y > 0)
     {
         if($amatrix[ $y - 1 ][ $x ] == COLOR_WHITE)
@@ -413,7 +420,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
         }
     }
 
-    // Left
+    # Left
     if($x > 0)
     {
         if($amatrix[ $y ][ $x - 1 ] == COLOR_WHITE)
@@ -489,6 +496,135 @@ function test_results($initial_filename,$output_filename)
 
             $step++;
         }
+    }
+}
+
+/**
+ * ICING ON THE CAKE
+ * function to show the movimentos in HTML format
+ */
+function show_results_html($initial_filename)
+{
+    global $matrix;
+    global $path;
+
+    $moves = explode(' ', $path);
+
+    if(count($moves) > 0)
+    {
+        # load the initial matrix (0)
+        $matrix = load_matrix($initial_filename);
+
+        # table structure based on the matrix (0)
+        $output_table = "<TABLE>";
+        foreach($matrix as $_y => $row)
+        {
+            $output_table.= "<TR>";
+            foreach($row as $_x => $cell)
+            {
+                $output_table.= "<TD id='cell_{$_y}_{$_x}' class='class_{$cell}'>&nbsp;</TD>";
+            }
+            $output_table.= "</TR>";
+        }
+        $output_table.= "</TABLE>";
+    
+        $output_moves = "<H2>" . implode(' ', $moves) . "</H2>";
+
+
+        # JS to make the magic...
+        $output_javascript = "<SCRIPT>";
+
+        # create a list with all of the steps/propagations... :-O
+        $y = 0;
+        $x = 0;
+        $output_javascript.= " const list_matrix = [\n";
+        foreach($moves as $i => $move)
+        {
+            $step = $i+1;
+            if (file_exists("matrix_{$step}.txt"))
+            {
+                # next move
+                switch($move)
+                {
+                    case MOVE_UP:    $y--;
+                    break;
+                    case MOVE_RIGHT: $x++;
+                    break;
+                    case MOVE_DOWN:  $y++;
+                    break;
+                    case MOVE_LEFT:  $x--;
+                    break;
+                }
+
+                $matrix = load_matrix("matrix_{$step}.txt");
+
+                $output_javascript.= ($i > 0 ? ',' : '') .  "[\n";
+                foreach($matrix as $_y => $row)
+                {
+                    $output_javascript.= ($_y > 0 ? ',' : ''). "[";
+                    foreach($row as $_x => $cell)
+                    {
+                        $output_javascript.= ($_x > 0 ? ',' : '');
+                        if($y == $_y and $x == $_x)
+                        {
+                            $output_javascript.= "'X'";
+                        }
+                        else
+                        {
+                            $output_javascript.= $cell;
+                        }
+                    }
+                    $output_javascript.= "]".  "\n";
+                }
+                $output_javascript.= "]\n";
+            }
+        }
+        $output_javascript.= "];\n";
+
+        # make the magic and show the moviments...
+        $output_javascript.= "var i = 0;
+            var elem = undefined;
+            setInterval(
+                function()
+                {
+                    i++;
+                    const matrix = list_matrix[ i ];
+
+                    for (var y = 0; y < matrix.length; y++)
+                    {
+                        var row = matrix[ y ];
+                        for (var x = 0; x < row.length; x++)
+                        {
+                            var cell = row[ x ];
+                            elem = document.getElementById( \"cell_\" + y.toString() + \"_\" + x.toString() );
+                            elem.className = \"class_\" + cell;
+                            // elem.innerHTML = cell;
+                        }
+                    }
+                }, 200);";
+        $output_javascript.= "</SCRIPT>";
+
+
+        # output the final HTML
+        $output_html = "<HTML>
+            <HEAD>
+            <STYLE>
+                table {width: 100%; height: 50%; border-collapse: collapse; }
+                table, tr, td {border: 1px solid black; }
+                .class_0 { background-color: white; }
+                .class_1 { background-color: green; }
+                .class_3 { background-color: blue; }
+                .class_4 { background-color: blue; }
+                .class_X { background-color: black; }
+            </STYLE>
+            {$output_javascript}
+            </HEAD>
+            <BODY>
+            {$output_table}
+            {$output_moves}
+            </BODY>
+            </HTML>";
+        echo $output_html;
     }
 }
 
