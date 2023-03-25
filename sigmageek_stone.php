@@ -2,14 +2,15 @@
 
 /**
  * RICARDO VOIGT (https://www.linkedin.com/in/ricardo-voigt-software)
- * 2023-03-24
+ * 
  * My solution for the "Stone Automata Maze Challenge"
  * by https://sigmageek.com/
  * 
+ * 2023-03-17 - 2023-03-31
+ * 
  * List of files:
- *  - sigmageek_TESTE_input.txt (my tests)
  *  - sigmageek_stone_input.txt (input from sigmageek, matrix 0)
- *  - output_file.txt           (text file containing all the movements, created on the FIRST RUN)
+ *  - output_file.txt           (resulting text file containing all the movements)
  * List of functions:
  *  - load_matrix               (load a matrix from a txt file)
  *  - save_matrix               (save a matrix into a txt file)
@@ -17,10 +18,7 @@
  *  - apply_propagation         (calculate and apply the propagation rule)
  *  - count_green_adjacents     (quantity of green adjacent cells around the position)
  *  - adjacent_white_cells_to_move (list of possible cells to move, with the direction and coordinates)
- *  - test_results              (evaluate the results creating txt files with each step, it's needed to RUN AGAIN)
- *  - show_results_html         (return a very simple HTML page with a table and javascript to show the steps)
- * 
- * OUTPUT:  RUN once, the program will create the "output_file.txt", RUN again and the result will be shown as HTML.
+ *  - show_results_html         (return a very simple HTML page with a table and javascript to show the steps and moves)
  * 
  */
 
@@ -44,7 +42,20 @@ $path = '';
 $step = 1;
 recursive_move(0, 0, $step);
 
+# save the result
+$output_file = fopen("output_file.txt", "w");
+try
+{
+    fwrite($output_file, $path);
+}
+finally
+{
+    fclose($output_file);
+}
+
 show_results_html($initial_filename);
+
+
 
 
 
@@ -245,10 +256,10 @@ function apply_propagation($amatrix)
  */
 function count_green_adjacents($matrix,$y,$x)
 {
+    $result = 0;
 
     $last_pos_y = count($matrix) - 1;
     $last_pos_x = count($matrix[ $y ]) - 1;
-    $result = 0;
 
     # 1 = Left
     if($x > 0)
@@ -339,17 +350,16 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
     $last_pos_y = count($amatrix) - 1;
     $last_pos_x = count($amatrix[ $y ]) - 1;
 
-    # 2023-03-24 - this night, I realized that the 
-    # shortest path in this case is ...RDRDRD....
-    # So I changed the order of the adjacents returned here
-    # and now I had the ideia of testing the STEP,
-    # when the STEP is ODD priorize the DOWN adjacent
-    # but if the STEP is EVEN priorize the RIGHT adjacent...
-    # Well done! It works now... :-)
+    # The shortest path in this case is RDRDRD.... or DRDRDRDR...
+    # So I defined the order of the adjacents
+    # returned here testing the STEP,
+    # when the STEP is ODD priorize the RIGHT adjacent
+    # else if the STEP is EVEN priorize the DOWN adjacent...
+    # Doing the opposite, I achived the result with more moves
 
-    if ($step % 2 == 0)
+    if ($step % 2 != 0) 
     {
-        # EVEN -> Right first in the result
+        # ODD -> Right is the first in result
 
         # Right
         if($x < $last_pos_x)
@@ -371,7 +381,7 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
     }
     else
     {
-        # ODD -> Down first in the result
+        # EVEN -> Down is the first in result
 
         # Down
         if($y < $last_pos_y)
@@ -426,12 +436,17 @@ function show_results_html($initial_filename)
 
     $moves = explode(' ', $path);
 
-    if(count($moves) > 0)
+    $qty_moves = count($moves);
+
+    if($qty_moves > 0)
     {
+        $output_moves = implode(' ', $moves);
+        $output_quantity = "Quantity of moves: {$qty_moves}";
+
         # load the initial matrix (0)
         $matrix = load_matrix($initial_filename);
 
-        # table structure based on the matrix (0)
+        # table structure based on the initial matrix (0)
         $output_table = "<TABLE>";
         foreach($matrix as $_y => $row)
         {
@@ -444,8 +459,6 @@ function show_results_html($initial_filename)
         }
         $output_table.= "</TABLE>";
     
-        $output_moves = "<H2>" . implode(' ', $moves) . "</H2>";
-
 
         # JS to make the magic...
         $output_javascript = "<SCRIPT>";
@@ -481,6 +494,7 @@ function show_results_html($initial_filename)
                     foreach($row as $_x => $cell)
                     {
                         $output_javascript.= ($_x > 0 ? ',' : '');
+                        # insert the particle 'X' on each position
                         if($y == $_y and $x == $_x)
                         {
                             $output_javascript.= "'X'";
@@ -497,13 +511,14 @@ function show_results_html($initial_filename)
         }
         $output_javascript.= "];\n";
 
-        # make the magic and show the moviments...
-        $output_javascript.= "var i = 0;
+        # make the magic JS to show the moviments...
+        $miliseconds = 100;
+        $output_javascript.= "
+            var i = 0;
             var elem = undefined;
             setInterval(
                 function()
                 {
-                    i++;
                     if(i < matrix_list.length)
                     {
                         const matrix = matrix_list[ i ];
@@ -512,14 +527,21 @@ function show_results_html($initial_filename)
                             var row = matrix[ y ];
                             for (var x = 0; x < row.length; x++)
                             {
-                                var cell = row[ x ];
+                                const cell = row[ x ];
                                 elem = document.getElementById( \"cell_\" + y.toString() + \"_\" + x.toString() );
-                                elem.className = \"class_\" + cell;
-                                // elem.innerHTML = cell;
+                                if (elem === undefined)
+                                {
+                                    console.log(\"undefine element at \" + y.toString() + \"_\" + x.toString() );
+                                }
+                                else
+                                {
+                                    elem.className = \"class_\" + cell;
+                                }
                             }
                         }
                     }
-                }, 200);";
+                    i++;
+                }, {$miliseconds});";
         $output_javascript.= "</SCRIPT>";
 
 
@@ -527,7 +549,7 @@ function show_results_html($initial_filename)
         $output_html = "<HTML>
             <HEAD>
             <STYLE>
-                table {width: 1024px; height: 768px; border-collapse: collapse; }
+                table {width: 100%; border-collapse: collapse; }
                 table, tr, td {border: 1px solid black; }
                 .class_0 { background-color: white; }
                 .class_1 { background-color: green; }
@@ -538,8 +560,11 @@ function show_results_html($initial_filename)
             {$output_javascript}
             </HEAD>
             <BODY>
+            <H1>Ricardo Voigt - Stone Automata Maze Challenge - 2023-03-31</H1>
+            <H2>cybervoigt@gmail.com</H2>
+            <H3>{$output_moves}</H3>
+            <H4>{$output_quantity}</H4>
             {$output_table}
-            {$output_moves}
             </BODY>
             </HTML>";
         echo $output_html;
