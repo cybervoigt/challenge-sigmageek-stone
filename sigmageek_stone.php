@@ -422,7 +422,8 @@ function show_results_html($initial_filename)
     global $matrix;
     global $path;
 
-    $moves = explode(' ', $path);
+    # without 'trim', explode returns 1 more empty item :-(
+    $moves = explode(' ', trim($path));
 
     $qty_moves = count($moves);
 
@@ -506,9 +507,11 @@ function show_results_html($initial_filename)
             setInterval(
                 function()
                 {
+                    //console.log(matrix_list.length);
                     if(i < matrix_list.length)
                     {
                         const matrix = matrix_list[ i ];
+
                         for (var y = 0; y < matrix.length; y++)
                         {
                             var row = matrix[ y ];
