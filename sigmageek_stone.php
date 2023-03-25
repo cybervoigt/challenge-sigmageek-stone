@@ -31,28 +31,23 @@ CONST MOVE_DOWN = 'D';
 CONST MOVE_RIGHT = 'R';
 CONST MOVE_LEFT = 'L';
 
-
-//$initial_filename = 'sigmageek_TESTE_input.txt';
+# input
 $initial_filename = "sigmageek_stone_input.txt";
 
 $matrix = load_matrix($initial_filename);
 
+# processing
 $path = '';
 
 $step = 1;
 recursive_move(0, 0, $step);
 
-# save the result
-$output_file = fopen("output_file.txt", "w");
-try
-{
-    fwrite($output_file, $path);
-}
-finally
-{
-    fclose($output_file);
-}
 
+# save the result
+file_put_contents("output_file.txt",$path);
+
+
+# output
 show_results_html($initial_filename);
 
 
@@ -87,6 +82,7 @@ function load_matrix($file_name)
     }
     return $result;
 }
+
 /**
  * save a matrix to a txt file
  */
@@ -146,17 +142,13 @@ function recursive_move($ay, $ax, $step)
     $result = FALSE;
     foreach($adjacents as $move => $pos)
     {
-        // echo $move.'<br>';
-        # each adjacent is a new path... :-O ? how to "rollback"? 
-        # I though recursive would solve that... :-/
-        # I need a counter to know the "level"...
 
         if( ! $result)
         {
             $_y = $pos[0];
             $_x = $pos[1];
 
-            # reload here the matrix??
+            # reload the matrix, when reading more than 1 adjacent.
             if ($i > 0)
             {
                 $matrix = load_matrix("matrix_{$step}.txt");
@@ -164,7 +156,8 @@ function recursive_move($ay, $ax, $step)
 
             if($matrix[ $_y ][ $_x ] == COLOR_WHITE)
             {
-                $result = recursive_move($_y, $_x, $step+1);
+                # move to this adjacent
+                $result = recursive_move($_y, $_x, $step + 1);
             }
             elseif($matrix[ $_y ][ $_x ] == COLOR_FINAL)
             {
@@ -172,21 +165,16 @@ function recursive_move($ay, $ax, $step)
             }
             else
             {
-                die("<h1>green found at level {$step}, it isn't supposed to happen!!</h1>");
+                die("green found at level {$step}, it isn't supposed to happen!!");
             }
 
             if($result)
             {
                 global $path;
-                # store the move 
-                if($path == '')
-                {
-                    $path = $move;
-                }
-                else
-                {
-                    $path = $move . ' '. $path;
-                }
+
+                # Store the move in the begining of path 
+                # because the program is "leaving" the recursive function.
+                $path = $move . ($path =! '' ? ' '.$path : '');
             }
         }
         $i++;
@@ -440,7 +428,6 @@ function show_results_html($initial_filename)
 
     if($qty_moves > 0)
     {
-        $output_moves = implode(' ', $moves);
         $output_quantity = "Quantity of moves: {$qty_moves}";
 
         # load the initial matrix (0)
@@ -512,7 +499,7 @@ function show_results_html($initial_filename)
         $output_javascript.= "];\n";
 
         # make the magic JS to show the moviments...
-        $miliseconds = 100;
+        $miliseconds = 1000;
         $output_javascript.= "
             var i = 0;
             var elem = undefined;
@@ -529,14 +516,7 @@ function show_results_html($initial_filename)
                             {
                                 const cell = row[ x ];
                                 elem = document.getElementById( \"cell_\" + y.toString() + \"_\" + x.toString() );
-                                if (elem === undefined)
-                                {
-                                    console.log(\"undefine element at \" + y.toString() + \"_\" + x.toString() );
-                                }
-                                else
-                                {
-                                    elem.className = \"class_\" + cell;
-                                }
+                                elem.className = \"class_\" + cell;
                             }
                         }
                     }
@@ -562,7 +542,7 @@ function show_results_html($initial_filename)
             <BODY>
             <H1>Ricardo Voigt - Stone Automata Maze Challenge - 2023-03-31</H1>
             <H2>cybervoigt@gmail.com</H2>
-            <H3>{$output_moves}</H3>
+            <H3>{$path}</H3>
             <H4>{$output_quantity}</H4>
             {$output_table}
             </BODY>
