@@ -23,8 +23,8 @@
  * 
  */
 
-const TIME_ONE_HOUR = 3600;
-set_time_limit( TIME_ONE_HOUR * 12 );
+const ONE_HOUR_SECONDS = 3600;
+set_time_limit( ONE_HOUR_SECONDS * 12 );
 
 /**
  * Execution test 1 between "2023-04-03 15:26" to "2023-04-04 00:56" 
@@ -42,9 +42,10 @@ CONST MOVE_RIGHT = 'R';
 CONST MOVE_LEFT = 'L';
 
 # input
-$initial_filename = "input1.txt";
+$input_filename = "input1.txt";
+$output_filename = "output_file_1.txt";
 
-$matrix = load_matrix($initial_filename);
+$matrix = load_matrix($input_filename);
 
 # processing
 $path = '';
@@ -54,11 +55,11 @@ recursive_move(0, 0, $step);
 
 
 # save the result
-file_put_contents("output_file_1.txt",$path);
+file_put_contents($output_filename,$path);
 
 
 # output (I think it isn't possible this way...)
-#show_results_html($initial_filename);
+#show_results_html($input_filename);
 echo "the end...";
 
 
@@ -422,146 +423,6 @@ function adjacent_white_cells_to_move($amatrix, $y, $x, $step)
 }
 
 
-
-/**
- * ICING ON THE CAKE
- * function to show the moviments in HTML format
- */
-function show_results_html($initial_filename)
-{
-    global $matrix;
-    global $path;
-
-    # without 'trim', explode returns 1 more empty item :-(
-    $moves = explode(' ', trim($path));
-
-    $qty_moves = count($moves);
-
-    if($qty_moves > 0)
-    {
-        $output_quantity = "Quantity of moves: {$qty_moves}";
-
-        # load the initial matrix (0)
-        $matrix = load_matrix($initial_filename);
-
-        # table structure based on the initial matrix (0)
-        $output_table = "<TABLE>";
-        foreach($matrix as $_y => $row)
-        {
-            $output_table.= "<TR>";
-            foreach($row as $_x => $cell)
-            {
-                $output_table.= "<TD id='cell_{$_y}_{$_x}' class='class_{$cell}'>&nbsp;</TD>";
-            }
-            $output_table.= "</TR>";
-        }
-        $output_table.= "</TABLE>";
-    
-
-        # JS to make the magic...
-        $output_javascript = "<SCRIPT>";
-
-        # create a list with all of the steps/propagations... :-O
-        $y = 0;
-        $x = 0;
-        $output_javascript.= " const matrix_list = [\n";
-        foreach($moves as $i => $move)
-        {
-            $step = $i+1;
-            if (file_exists("matrix_{$step}.txt"))
-            {
-                # next move
-                switch($move)
-                {
-                    case MOVE_UP:    $y--;
-                    break;
-                    case MOVE_RIGHT: $x++;
-                    break;
-                    case MOVE_DOWN:  $y++;
-                    break;
-                    case MOVE_LEFT:  $x--;
-                    break;
-                }
-
-                $matrix = load_matrix("matrix_{$step}.txt");
-
-                $output_javascript.= ($i > 0 ? ',' : '') .  "[\n";
-                foreach($matrix as $_y => $row)
-                {
-                    $output_javascript.= ($_y > 0 ? ',' : ''). "[";
-                    foreach($row as $_x => $cell)
-                    {
-                        $output_javascript.= ($_x > 0 ? ',' : '');
-                        # insert the particle 'X' on each position
-                        if($y == $_y and $x == $_x)
-                        {
-                            $output_javascript.= "'X'";
-                        }
-                        else
-                        {
-                            $output_javascript.= $cell;
-                        }
-                    }
-                    $output_javascript.= "]".  "\n";
-                }
-                $output_javascript.= "]\n";
-            }
-        }
-        $output_javascript.= "];\n";
-
-        # make the magic JS to show the moviments...
-        $miliseconds = 1000;
-        $output_javascript.= "
-            var i = 0;
-            var elem = undefined;
-            setInterval(
-                function()
-                {
-                    //console.log(matrix_list.length);
-                    if(i < matrix_list.length)
-                    {
-                        const matrix = matrix_list[ i ];
-
-                        for (var y = 0; y < matrix.length; y++)
-                        {
-                            var row = matrix[ y ];
-                            for (var x = 0; x < row.length; x++)
-                            {
-                                const cell = row[ x ];
-                                elem = document.getElementById( \"cell_\" + y.toString() + \"_\" + x.toString() );
-                                elem.className = \"class_\" + cell;
-                            }
-                        }
-                    }
-                    i++;
-                }, {$miliseconds});";
-        $output_javascript.= "</SCRIPT>";
-
-
-        # output the final HTML
-        $output_html = "<HTML>
-            <HEAD>
-            <STYLE>
-                table {width: 100%; border-collapse: collapse; }
-                table, tr, td {border: 1px solid black; }
-                .class_0 { background-color: white; }
-                .class_1 { background-color: green; }
-                .class_3 { background-color: blue; }
-                .class_4 { background-color: blue; }
-                .class_X { background-color: black; }
-            </STYLE>
-            {$output_javascript}
-            </HEAD>
-            <BODY>
-            <H1>Ricardo Voigt - Stone Automata Maze Challenge - 2023-03-31</H1>
-            <H2>cybervoigt@gmail.com</H2>
-            <H3>{$path}</H3>
-            <H4>{$output_quantity}</H4>
-            {$output_table}
-            </BODY>
-            </HTML>";
-        echo $output_html;
-    }
-}
+# function  show_results_html removed...
 
 ?>
